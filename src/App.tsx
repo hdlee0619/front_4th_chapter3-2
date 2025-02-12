@@ -55,6 +55,7 @@ import {
   getWeeksAtMonth,
 } from './utils/dateUtils';
 import { findOverlappingEvents } from './utils/eventOverlap';
+import { getRepeatOptions } from './utils/getRepeatOptions.ts';
 import { getTimeErrorMessage } from './utils/timeValidation';
 
 const categories = ['업무', '개인', '가족', '기타'];
@@ -87,6 +88,8 @@ function App() {
     setIsRepeating,
     repeatType,
     setRepeatType,
+    repeatOption,
+    setRepeatOption,
     repeatInterval,
     setRepeatInterval,
     repeatEndDate,
@@ -164,6 +167,8 @@ function App() {
       resetForm();
     }
   };
+
+  const repeatOptions = getRepeatOptions(repeatType, date);
 
   const renderWeekView = () => {
     const weekDates = getWeekDates(currentDate);
@@ -378,18 +383,32 @@ function App() {
 
           {isRepeating && (
             <VStack width="100%">
-              <FormControl>
-                <FormLabel>반복 유형</FormLabel>
-                <Select
-                  value={repeatType}
-                  onChange={(e) => setRepeatType(e.target.value as RepeatType)}
-                >
-                  <option value="daily">매일</option>
-                  <option value="weekly">매주</option>
-                  <option value="monthly">매월</option>
-                  <option value="yearly">매년</option>
-                </Select>
-              </FormControl>
+              <HStack width="100%">
+                <FormControl>
+                  <FormLabel>반복 유형</FormLabel>
+                  <Select
+                    value={repeatType}
+                    onChange={(e) => setRepeatType(e.target.value as RepeatType)}
+                  >
+                    <option value="daily">매일</option>
+                    <option value="weekly">매주</option>
+                    <option value="monthly">매월</option>
+                    <option value="yearly">매년</option>
+                  </Select>
+                </FormControl>
+                {repeatOptions.length > 0 && date && (
+                  <FormControl>
+                    <FormLabel>주기 설정</FormLabel>
+                    <Select value={repeatOption} onChange={(e) => setRepeatOption(e.target.value)}>
+                      {repeatOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              </HStack>
               <HStack width="100%">
                 <FormControl>
                   <FormLabel>반복 간격</FormLabel>
