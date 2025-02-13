@@ -13,7 +13,7 @@ export const useEventForm = (initialEvent?: Event) => {
   const [description, setDescription] = useState(initialEvent?.description || '');
   const [location, setLocation] = useState(initialEvent?.location || '');
   const [category, setCategory] = useState(initialEvent?.category || '');
-  const [isRepeating, setIsRepeating] = useState(initialEvent?.repeat.type !== 'none');
+  const [isRepeating, setIsRepeating] = useState(false);
   const [repeatType, setRepeatType] = useState<RepeatType>(initialEvent?.repeat.type || 'daily');
   const [repeatOption, setRepeatOption] = useState('');
   const [repeatInterval, setRepeatInterval] = useState(initialEvent?.repeat.interval || 1);

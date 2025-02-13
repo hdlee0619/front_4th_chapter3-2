@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { http, HttpResponse } from 'msw';
 
 import { server } from '../setupTests';
@@ -10,6 +12,25 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
   server.use(
     http.get('/api/events', () => {
       return HttpResponse.json({ events: mockEvents });
+    }),
+    http.post('/api/events-list', async ({ request }) => {
+      const { events } = (await request.json()) as { events: Event[] };
+
+      const newEvents = events.map((event: Event) => {
+        const postId = randomUUID();
+        const repeatId = randomUUID();
+        const isRepeatEvent = event.repeat.type !== 'none';
+        return {
+          ...event,
+          id: postId,
+          repeat: {
+            ...event.repeat,
+            id: isRepeatEvent ? repeatId : undefined,
+          },
+        };
+      });
+      mockEvents.push(...newEvents);
+      return HttpResponse.json(newEvents, { status: 201 });
     }),
     http.post('/api/events', async ({ request }) => {
       const newEvent = (await request.json()) as Event;
@@ -59,6 +80,24 @@ export const setupMockHandlerUpdating = () => {
 
       mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
       return HttpResponse.json(mockEvents[index]);
+    }),
+    http.put('/api/events-list', async ({ request }) => {
+      const updatedEvents = (await request.json()) as Event[];
+      let isUpdated = false;
+
+      updatedEvents.forEach((event: Event) => {
+        const index = mockEvents.findIndex((e) => e.id === event.id);
+        if (index > -1) {
+          isUpdated = true;
+          mockEvents[index] = { ...mockEvents[index], ...event };
+        }
+      });
+
+      if (!isUpdated) {
+        return new HttpResponse(null, { status: 404 });
+      }
+
+      return HttpResponse.json(mockEvents);
     })
   );
 };
@@ -88,6 +127,13 @@ export const setupMockHandlerDeletion = () => {
       const index = mockEvents.findIndex((event) => event.id === id);
 
       mockEvents.splice(index, 1);
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.delete('/api/events-list', async ({ request }) => {
+      const eventIds = (await request.json()) as Event['id'][];
+      const filteredEvents = mockEvents.filter((event) => !eventIds.includes(event.id));
+      mockEvents.length = 0;
+      mockEvents.push(...filteredEvents);
       return new HttpResponse(null, { status: 204 });
     })
   );

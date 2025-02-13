@@ -3,6 +3,7 @@ import { render, screen, within, act } from '@testing-library/react';
 import { UserEvent, userEvent } from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { ReactElement } from 'react';
+import { expect } from 'vitest';
 
 import {
   setupMockHandlerCreation,
@@ -93,7 +94,11 @@ describe('일정 CRUD 및 기본 기능', () => {
 
     // 삭제 버튼 클릭
     const allDeleteButton = await screen.findAllByLabelText('Delete event');
+
+    // 삭제 Dialog 확인
     await user.click(allDeleteButton[0]);
+    expect(screen.getByText('일정 삭제')).toBeInTheDocument();
+    await user.click(screen.getByText('삭제'));
 
     expect(eventList.queryByText('삭제할 이벤트')).not.toBeInTheDocument();
   });

@@ -105,6 +105,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const deleteEvent = async (id: string, mode: 'all' | 'single') => {
     try {
       const event = events.find((e) => e.id === id);
+      let response;
 
       if (event?.repeat?.id) {
         if (mode === 'all') {
@@ -112,7 +113,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
             .filter((e) => e.repeat?.id === event.repeat.id)
             .map((e) => e.id);
 
-          await fetch('/api/events-list', {
+          response = await fetch('/api/events-list', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -120,14 +121,18 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
             body: JSON.stringify({ eventIds: relatedEventIds }),
           });
         } else {
-          await fetch(`/api/events/${id}`, {
+          response = await fetch(`/api/events/${id}`, {
             method: 'DELETE',
           });
         }
       } else {
-        await fetch(`/api/events/${id}`, {
+        response = await fetch(`/api/events/${id}`, {
           method: 'DELETE',
         });
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
       }
 
       await fetchEvents();
@@ -137,10 +142,12 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         duration: 3000,
       });
     } catch (error) {
+      console.error('Error deleting event:', error);
       toast({
-        title: '일정 삭제 중 오류가 발생했습니다.',
+        title: '일정 삭제 실패',
         status: 'error',
         duration: 3000,
+        isClosable: true,
       });
     }
   };

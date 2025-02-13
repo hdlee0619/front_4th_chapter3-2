@@ -164,6 +164,9 @@ it("네트워크 오류 시 '일정 삭제 실패'라는 텍스트가 노출되�
   server.use(
     http.delete('/api/events/:id', () => {
       return new HttpResponse(null, { status: 500 });
+    }),
+    http.delete('/api/events-list', () => {
+      return new HttpResponse(null, { status: 500 });
     })
   );
 
@@ -172,7 +175,7 @@ it("네트워크 오류 시 '일정 삭제 실패'라는 텍스트가 노출되�
   await act(() => Promise.resolve(null));
 
   await act(async () => {
-    await result.current.deleteEvent('1');
+    await result.current.deleteEvent('1', 'single');
   });
 
   expect(toastFn).toHaveBeenCalledWith({
