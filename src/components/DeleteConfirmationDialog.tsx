@@ -19,7 +19,7 @@ interface Props {
   event?: Event;
   isOpen: boolean;
   onClose: () => void;
-  onDelete: (mode: 'single' | 'all') => void;
+  onDelete: (_mode: 'single' | 'all') => void;
 }
 
 export const DeleteConfirmDialog = ({ event, isOpen, onClose, onDelete }: Props) => {
