@@ -3,6 +3,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DeleteIcon,
+  RepeatIcon,
   EditIcon,
 } from '@chakra-ui/icons';
 import {
@@ -40,6 +41,7 @@ import {
 } from '@chakra-ui/react';
 import { useRef, useState } from 'react';
 
+import { DeleteConfirmDialog } from './components/DeleteConfirmationDialog.tsx';
 import { useCalendarView } from './hooks/useCalendarView.ts';
 import { useEventForm } from './hooks/useEventForm.ts';
 import { useEventOperations } from './hooks/useEventOperations.ts';
@@ -115,6 +117,8 @@ function App() {
   const { searchTerm, filteredEvents, setSearchTerm } = useSearch(events, currentDate, view);
 
   const [isOverlapDialogOpen, setIsOverlapDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteEventId, setDeleteEventId] = useState('');
   const [overlappingEvents, setOverlappingEvents] = useState<Event[]>([]);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
@@ -263,6 +267,7 @@ function App() {
                           )}
                           {getEventsForDay(filteredEvents, day).map((event) => {
                             const isNotified = notifiedEvents.includes(event.id);
+                            const isRepeatEvent = event.repeat?.type !== 'none';
                             return (
                               <Box
                                 key={event.id}
@@ -275,6 +280,7 @@ function App() {
                               >
                                 <HStack spacing={1}>
                                   {isNotified && <BellIcon />}
+                                  {isRepeatEvent && <RepeatIcon />}
                                   <Text fontSize="sm" noOfLines={1}>
                                     {event.title}
                                   </Text>
@@ -360,75 +366,84 @@ function App() {
             </Select>
           </FormControl>
 
-          <FormControl>
-            <FormLabel>알림 설정</FormLabel>
-            <Select
-              value={notificationTime}
-              onChange={(e) => setNotificationTime(Number(e.target.value))}
-            >
-              {notificationOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
+          {!editingEvent && (
+            <>
+              <FormControl>
+                <FormLabel>알림 설정</FormLabel>
+                <Select
+                  value={notificationTime}
+                  onChange={(e) => setNotificationTime(Number(e.target.value))}
+                >
+                  {notificationOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
 
-          <FormControl>
-            <FormLabel>반복 설정</FormLabel>
-            <Checkbox isChecked={isRepeating} onChange={(e) => setIsRepeating(e.target.checked)}>
-              반복 일정
-            </Checkbox>
-          </FormControl>
-
-          {isRepeating && (
-            <VStack width="100%">
-              <HStack width="100%">
-                <FormControl>
-                  <FormLabel>반복 유형</FormLabel>
-                  <Select
-                    value={repeatType}
-                    onChange={(e) => setRepeatType(e.target.value as RepeatType)}
-                  >
-                    <option value="daily">매일</option>
-                    <option value="weekly">매주</option>
-                    <option value="monthly">매월</option>
-                    <option value="yearly">매년</option>
-                  </Select>
-                </FormControl>
-                {repeatOptions.length > 0 && date && (
-                  <FormControl>
-                    <FormLabel>주기 설정</FormLabel>
-                    <Select value={repeatOption} onChange={(e) => setRepeatOption(e.target.value)}>
-                      {repeatOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-              </HStack>
-              <HStack width="100%">
-                <FormControl>
-                  <FormLabel>반복 간격</FormLabel>
-                  <Input
-                    type="number"
-                    value={repeatInterval}
-                    onChange={(e) => setRepeatInterval(Number(e.target.value))}
-                    min={1}
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>반복 종료일</FormLabel>
-                  <Input
-                    type="date"
-                    value={repeatEndDate}
-                    onChange={(e) => setRepeatEndDate(e.target.value)}
-                  />
-                </FormControl>
-              </HStack>
-            </VStack>
+              <FormControl>
+                <FormLabel>반복 설정</FormLabel>
+                <Checkbox
+                  isChecked={isRepeating}
+                  onChange={(e) => setIsRepeating(e.target.checked)}
+                >
+                  반복 일정
+                </Checkbox>
+              </FormControl>
+              {isRepeating && (
+                <VStack width="100%">
+                  <HStack width="100%">
+                    <FormControl>
+                      <FormLabel>반복 유형</FormLabel>
+                      <Select
+                        value={repeatType}
+                        onChange={(e) => setRepeatType(e.target.value as RepeatType)}
+                      >
+                        <option value="daily">매일</option>
+                        <option value="weekly">매주</option>
+                        <option value="monthly">매월</option>
+                        <option value="yearly">매년</option>
+                      </Select>
+                    </FormControl>
+                    {repeatOptions.length > 0 && date && (
+                      <FormControl>
+                        <FormLabel>주기 설정</FormLabel>
+                        <Select
+                          value={repeatOption}
+                          onChange={(e) => setRepeatOption(e.target.value)}
+                        >
+                          {repeatOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  </HStack>
+                  <HStack width="100%">
+                    <FormControl>
+                      <FormLabel>반복 간격</FormLabel>
+                      <Input
+                        type="number"
+                        value={repeatInterval}
+                        onChange={(e) => setRepeatInterval(Number(e.target.value))}
+                        min={1}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>반복 종료일</FormLabel>
+                      <Input
+                        type="date"
+                        value={repeatEndDate}
+                        onChange={(e) => setRepeatEndDate(e.target.value)}
+                      />
+                    </FormControl>
+                  </HStack>
+                </VStack>
+              )}
+            </>
           )}
 
           <Button data-testid="event-submit-button" onClick={addOrUpdateEvent} colorScheme="blue">
@@ -526,7 +541,10 @@ function App() {
                     <IconButton
                       aria-label="Delete event"
                       icon={<DeleteIcon />}
-                      onClick={() => deleteEvent(event.id)}
+                      onClick={() => {
+                        setDeleteEventId(event.id);
+                        setIsDeleteDialogOpen(true);
+                      }}
                     />
                   </HStack>
                 </HStack>
@@ -590,6 +608,16 @@ function App() {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      <DeleteConfirmDialog
+        event={events.find((event) => event.id === deleteEventId)}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onDelete={async (mode) => {
+          await deleteEvent(deleteEventId, mode);
+          setIsDeleteDialogOpen(false);
+        }}
+      />
 
       {notifications.length > 0 && (
         <VStack position="fixed" top={4} right={4} spacing={2} align="flex-end">

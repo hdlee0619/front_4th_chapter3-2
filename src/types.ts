@@ -1,12 +1,15 @@
 export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface RepeatInfo {
+  id?: string;
   type: RepeatType;
+  repeatOption?: string;
   interval: number;
   endDate?: string;
 }
 
 export interface EventForm {
+  id?: string;
   title: string;
   date: string;
   startTime: string;
@@ -18,6 +21,6 @@ export interface EventForm {
   notificationTime: number; // 분 단위로 저장
 }
 
-export interface Event extends EventForm {
+export interface Event extends Omit<EventForm, 'id'> {
   id: string;
 }
