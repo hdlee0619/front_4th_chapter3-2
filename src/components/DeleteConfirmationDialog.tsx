@@ -9,6 +9,7 @@ import {
   Text,
   AlertDialogFooter,
   Button,
+  RadioGroup,
 } from '@chakra-ui/react';
 import { useRef, useState } from 'react';
 
@@ -33,14 +34,20 @@ export const DeleteConfirmDialog = ({ event, isOpen, onClose, onDelete }: Props)
           <AlertDialogHeader>일정 삭제</AlertDialogHeader>
           <AlertDialogBody>
             {isRepeating && (
-              <VStack align="start" mb={4}>
-                <Radio value="single" onChange={() => setDeleteMode('single')}>
-                  이 일정만 삭제
-                </Radio>
-                <Radio value="all" onChange={() => setDeleteMode('all')}>
-                  모든 반복 일정 삭제
-                </Radio>
-              </VStack>
+              <RadioGroup value={deleteMode}>
+                <VStack align="start" mb={4}>
+                  <Radio
+                    aria-label="single-delete"
+                    value="single"
+                    onChange={() => setDeleteMode('single')}
+                  >
+                    이 일정만 삭제
+                  </Radio>
+                  <Radio aria-label="all-delete" value="all" onChange={() => setDeleteMode('all')}>
+                    모든 반복 일정 삭제
+                  </Radio>
+                </VStack>
+              </RadioGroup>
             )}
             <Text>정말 삭제하시겠습니까?</Text>
           </AlertDialogBody>

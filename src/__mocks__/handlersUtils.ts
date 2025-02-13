@@ -122,6 +122,25 @@ export const setupMockHandlerDeletion = () => {
     http.get('/api/events', () => {
       return HttpResponse.json({ events: mockEvents });
     }),
+    http.post('/api/events-list', async ({ request }) => {
+      const { events } = (await request.json()) as { events: Event[] };
+
+      const newEvents = events.map((event: Event) => {
+        const postId = randomUUID();
+        const repeatId = randomUUID();
+        const isRepeatEvent = event.repeat.type !== 'none';
+        return {
+          ...event,
+          id: postId,
+          repeat: {
+            ...event.repeat,
+            id: isRepeatEvent ? repeatId : undefined,
+          },
+        };
+      });
+      mockEvents.push(...newEvents);
+      return HttpResponse.json(newEvents, { status: 201 });
+    }),
     http.delete('/api/events/:id', ({ params }) => {
       const { id } = params;
       const index = mockEvents.findIndex((event) => event.id === id);
